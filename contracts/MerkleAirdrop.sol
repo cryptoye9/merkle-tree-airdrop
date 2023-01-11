@@ -5,31 +5,33 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+
 contract MerkleAirdrop is Ownable {
     using SafeERC20 for IERC20;
 
     address public airdropToken;
-    bytes32 root;
+    bytes32 public root;
+    bool private airdropSet;
 
     mapping(address => bool) public isAirdropClaimed;
 
     event AirdropClaimed(address indexed user, address indexed token, uint256 amount);
+
+    error AlreadyClaimed();
+    error InvalidProof();
+    error ZeroAddress();
+    error AirdropIsAlreadySet();
 
     function claim(
         address _user,
         uint256 _amount,
         bytes32[] calldata _merkleProof
     ) external {
-        require(!isAirdropClaimed[_user], "Airdrop already claimed");
+        if(isAirdropClaimed[_user]) revert AlreadyClaimed();
 
-        require(
-            isPartOfMerkleTree(
-                _user,
-                _amount,
-                _merkleProof
-            ),
-            "Merkle verification failed"
-        );
+        if(!isPartOfMerkleTree(_user, _amount, _merkleProof)) {
+            revert InvalidProof();
+        }
 
         isAirdropClaimed[_user] = true;
 
@@ -48,7 +50,9 @@ contract MerkleAirdrop is Ownable {
     }
 
     function initAirdrop(address _airdropToken, bytes32 _root) external onlyOwner {
-       require(_airdropToken != address(0), "Airdrop token cant be zero address");
+       if(_airdropToken == address(0)) revert ZeroAddress();
+       if(airdropSet) revert AirdropIsAlreadySet();
+       airdropSet = true;
        airdropToken = _airdropToken;
        root = _root;
     }
