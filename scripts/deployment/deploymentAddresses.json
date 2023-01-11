@@ -1,0 +1,9 @@
+{
+    "BSCSCAN_TESTNET": {
+        "old": {},
+        "new": {
+            "airdropToken": "0xB16b9CEc071D2E2CfA75687495e0dEC4AC4eB741",
+            "merkleAirdrop": "0xC603C83885BBF1A3a971F600a6cAFC26BFb98203"
+        }
+    }
+}
