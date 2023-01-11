@@ -32,12 +32,11 @@ describe("MerkleAirdrop", () => {
   let airdropToken;
 
   let deployer;
-  let user0;
-  let user1;
+  let users;;
   let hacker;
 
   before(async () => {
-    [deployer, user0, user1, hacker] = await ethers.getSigners();
+    [deployer, hacker, ...users] = await ethers.getSigners();
 
     merkleAirdrop = (await deployContract(
       deployer,
@@ -52,8 +51,16 @@ describe("MerkleAirdrop", () => {
     await airdropToken.connect(deployer).transfer(merkleAirdrop.address, totalSupply)
 
     airdropData = {
-      [user0.address]: utils.parseEther("100").toString(),
-      [user1.address]: utils.parseEther("200").toString(),
+      [users[0].address]: utils.parseEther("100").toString(),
+      [users[1].address]: utils.parseEther("200").toString(),
+      [users[2].address]: utils.parseEther("300").toString(),
+      [users[3].address]: utils.parseEther("400").toString(),
+      [users[4].address]: utils.parseEther("500").toString(),
+      [users[5].address]: utils.parseEther("600").toString(),
+      [users[6].address]: utils.parseEther("700").toString(),
+      [users[7].address]: utils.parseEther("800").toString(),
+      [users[8].address]: utils.parseEther("900").toString(),
+      [users[9].address]: utils.parseEther("1000").toString(),
     };
 
 
@@ -77,13 +84,21 @@ describe("MerkleAirdrop", () => {
             merkleAirdrop
               .connect(deployer)
               .initAirdrop(AddressZero, merkleTree.getHexRoot()
-          )).to.be.revertedWith("Airdrop token cant be zero address");
+          )).to.be.revertedWith("ZeroAddress()");
+      });
+
+      it("revert when initArdrop for the second time", async () => {
+        await expect(
+            merkleAirdrop
+              .connect(deployer)
+              .initAirdrop(airdropToken.address, merkleTree.getHexRoot()
+          )).to.be.revertedWith("AirdropIsAlreadySet()");
       });
   });
 
   describe("Claim Airdrops", () => {
     it("# claimAirdrop (user1)", async () => {
-        const _user = user0;
+        const _user = users[0];
         const _amount = airdropData[_user.address];
 
         const proof = merkleTree.getHexProof(
@@ -100,7 +115,7 @@ describe("MerkleAirdrop", () => {
       });
 
       it("# claimAirdrop (user2)", async () => {
-        const _user = user1;
+        const _user = users[1];
         const _amount = airdropData[_user.address];
 
         const proof = merkleTree.getHexProof(
@@ -117,7 +132,7 @@ describe("MerkleAirdrop", () => {
       });
 
       it("revert when claiming tokens for the second time", async () => {
-        const _user = user0;
+        const _user = users[0];
         const _amount = airdropData[_user.address];
 
         const proof = merkleTree.getHexProof(
@@ -128,7 +143,7 @@ describe("MerkleAirdrop", () => {
           merkleAirdrop
             .connect(_user)
             .claim(_user.address, _amount, proof)
-        ).to.revertedWith("Airdrop already claimed");
+        ).to.revertedWith("AlreadyClaimed()");
       });
 
       it("revert when hacker tries to claim tokens", async () => {
@@ -151,7 +166,7 @@ describe("MerkleAirdrop", () => {
           merkleAirdrop
             .connect(_user)
             .claim(_user.address, _amount, proof)
-        ).to.revertedWith("Merkle verification failed");
+        ).to.revertedWith("InvalidProof()");
       });
   });
 });
